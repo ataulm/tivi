@@ -17,21 +17,30 @@
 package me.banes.chris.tivi.home.discover
 
 import android.view.View
-import com.airbnb.epoxy.Typed3EpoxyController
+import com.airbnb.epoxy.EpoxyController
 import me.banes.chris.tivi.R
 import me.banes.chris.tivi.data.Entry
 import me.banes.chris.tivi.data.entities.ListItem
 import me.banes.chris.tivi.data.entities.PopularEntry
 import me.banes.chris.tivi.data.entities.TrendingEntry
 import me.banes.chris.tivi.emptyState
+import me.banes.chris.tivi.extensions.observeForeverK
 import me.banes.chris.tivi.header
 import me.banes.chris.tivi.posterGridItem
-import me.banes.chris.tivi.tmdb.TmdbImageUrlProvider
 import me.banes.chris.tivi.ui.epoxy.TotalSpanOverride
 
 class DiscoverEpoxyController(
+        private val viewModel: DiscoverViewModel,
         private val callbacks: Callbacks
-) : Typed3EpoxyController<List<ListItem<TrendingEntry>>, List<ListItem<PopularEntry>>, TmdbImageUrlProvider>() {
+) : EpoxyController() {
+
+    init {
+        viewModel.popularItems.observeForeverK { buildModels() }
+        viewModel.trendingItems.observeForeverK { buildModels() }
+        viewModel.trendingRefreshing.observeForeverK { buildModels() }
+        viewModel.popularRefreshing.observeForeverK { buildModels() }
+        viewModel.tmdbImageUrlProvider.observeForeverK { buildModels() }
+    }
 
     interface Callbacks {
         fun onTrendingHeaderClicked(items: List<ListItem<TrendingEntry>>?)
@@ -39,13 +48,15 @@ class DiscoverEpoxyController(
         fun onItemClicked(item: ListItem<out Entry>)
     }
 
-    override fun buildModels(
-            trending: List<ListItem<TrendingEntry>>?,
-            popular: List<ListItem<PopularEntry>>?,
-            tmdbImageUrlProvider: TmdbImageUrlProvider?) {
+    override fun buildModels() {
+        val trending = viewModel.trendingItems.value
+        val popular = viewModel.popularItems.value
+        val tmdbImageUrlProvider = viewModel.tmdbImageUrlProvider.value
+
         header {
             id("trending_header")
             title(R.string.discover_trending)
+            loading(viewModel.trendingRefreshing.value == true)
             spanSizeOverride(TotalSpanOverride)
             buttonClickListener(View.OnClickListener {
                 callbacks.onTrendingHeaderClicked(trending)
@@ -76,6 +87,7 @@ class DiscoverEpoxyController(
             id("popular_header")
             title(R.string.discover_popular)
             spanSizeOverride(TotalSpanOverride)
+            loading(viewModel.popularRefreshing.value == true)
             buttonClickListener(View.OnClickListener {
                 callbacks.onPopularHeaderClicked(popular)
             })

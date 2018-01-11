@@ -23,5 +23,7 @@ import me.banes.chris.tivi.tmdb.TmdbImageUrlProvider
 data class DiscoverViewState(
         val trendingItems: List<TrendingListItem>,
         val popularItems: List<PopularListItem>,
-        val tmdbImageUrlProvider: TmdbImageUrlProvider
+        val tmdbImageUrlProvider: TmdbImageUrlProvider,
+        val popularRefreshing: Boolean,
+        val trendingRefreshing: Boolean
 )

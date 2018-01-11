@@ -24,10 +24,11 @@
 
         <variable name="title" type="int" />
         <variable name="buttonTitle" type="int" />
+        <variable name="loading" type="boolean" />
         <variable name="buttonClickListener" type="android.view.View.OnClickListener" />
     </data>
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:foreground="?android:attr/selectableItemBackground"
@@ -44,6 +45,18 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
             tools:text="Game of Thrones" />
 
+        <ProgressBar
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:visibleIfTrue="@{loading}" />
+
+        <Space
+            android:layout_width="0px"
+            android:layout_height="0px"
+            android:layout_weight="1" />
+
         <TextView
             android:id="@+id/header_more"
             android:layout_width="wrap_content"
@@ -58,5 +71,5 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
             android:textColor="@color/colorAccent" />
 
-    </FrameLayout>
+    </LinearLayout>
 </layout>

@@ -39,10 +39,11 @@ import me.banes.chris.tivi.util.GridToGridTransitioner
 
 internal class DiscoverFragment : HomeFragment<DiscoverViewModel>() {
 
-    private lateinit var gridLayoutManager: GridLayoutManager
     private lateinit var homeNavigator: HomeNavigator
 
-    private val controller = DiscoverEpoxyController(object : DiscoverEpoxyController.Callbacks {
+    private lateinit var controller: DiscoverEpoxyController
+
+    private val controllerCallbacks = object : DiscoverEpoxyController.Callbacks {
         override fun onTrendingHeaderClicked(items: List<ListItem<TrendingEntry>>?) {
             val sharedElementHelper = SharedElementHelper()
             items?.forEach { addSharedElementEntry(it, sharedElementHelper) }
@@ -69,7 +70,7 @@ internal class DiscoverFragment : HomeFragment<DiscoverViewModel>() {
                 sharedElementHelper.addSharedElement(it.itemView, transitionName)
             }
         }
-    })
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,10 +83,6 @@ internal class DiscoverFragment : HomeFragment<DiscoverViewModel>() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel.data.observeK(this) { model ->
-            controller.setData(model?.trendingItems, model?.popularItems, model?.tmdbImageUrlProvider)
-            scheduleStartPostponedTransitions()
-        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -94,11 +91,12 @@ internal class DiscoverFragment : HomeFragment<DiscoverViewModel>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         postponeEnterTransition()
 
+        controller = DiscoverEpoxyController(viewModel, controllerCallbacks)
+
         // Setup span and columns
-        gridLayoutManager = summary_rv.layoutManager as GridLayoutManager
+        var gridLayoutManager = summary_rv.layoutManager as GridLayoutManager
         gridLayoutManager.spanSizeLookup = controller.spanSizeLookup
         controller.spanCount = gridLayoutManager.spanCount
 

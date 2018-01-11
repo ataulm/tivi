@@ -23,3 +23,7 @@ import android.arch.lifecycle.Observer
 inline fun <T> LiveData<T>.observeK(owner: LifecycleOwner, crossinline observer: (T?) -> Unit) {
     this.observe(owner, Observer { observer(it) })
 }
+
+inline fun <T> LiveData<T>.observeForeverK(crossinline observer: (T?) -> Unit) {
+    this.observeForever { observer(it) }
+}

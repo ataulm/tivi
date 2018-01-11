@@ -46,7 +46,12 @@ fun genreString(view: TextView, genres: List<Genre>?) {
 
 @BindingAdapter(value = ["android:visibleIfNotNull"])
 fun visibleIfNotNull(view: View, target: Any?) {
-    view.visibility = if (target == null) View.GONE else View.VISIBLE
+    visibleIfTrue(view, target != null)
+}
+
+@BindingAdapter(value = ["android:visibleIfTrue"])
+fun visibleIfTrue(view: View, value: Boolean) {
+    view.visibility = if (value) View.VISIBLE else View.GONE
 }
 
 @BindingAdapter(value = ["android:srcRes"])

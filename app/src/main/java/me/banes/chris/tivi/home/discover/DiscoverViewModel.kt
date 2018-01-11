@@ -17,17 +17,23 @@
 package me.banes.chris.tivi.home.discover
 
 import android.arch.lifecycle.MutableLiveData
+import io.reactivex.BackpressureStrategy
 import io.reactivex.rxkotlin.Flowables
 import io.reactivex.rxkotlin.plusAssign
+import io.reactivex.subjects.BehaviorSubject
 import me.banes.chris.tivi.AppNavigator
 import me.banes.chris.tivi.SharedElementHelper
+import me.banes.chris.tivi.data.entities.PopularListItem
 import me.banes.chris.tivi.data.entities.TiviShow
+import me.banes.chris.tivi.data.entities.TrendingListItem
 import me.banes.chris.tivi.home.HomeFragmentViewModel
 import me.banes.chris.tivi.home.HomeNavigator
+import me.banes.chris.tivi.tmdb.TmdbImageUrlProvider
 import me.banes.chris.tivi.tmdb.TmdbManager
 import me.banes.chris.tivi.trakt.TraktManager
 import me.banes.chris.tivi.trakt.calls.PopularCall
 import me.banes.chris.tivi.trakt.calls.TrendingCall
+import me.banes.chris.tivi.ui.databinding.ObservableLiveData
 import me.banes.chris.tivi.util.AppRxSchedulers
 import timber.log.Timber
 import javax.inject.Inject
@@ -41,24 +47,38 @@ class DiscoverViewModel @Inject constructor(
         tmdbManager: TmdbManager
 ) : HomeFragmentViewModel(traktManager, appNavigator) {
 
-    val data = MutableLiveData<DiscoverViewState>()
+    val popularRefreshing = ObservableLiveData<Boolean>()
+    val popularItems = ObservableLiveData<List<PopularListItem>>()
+
+    val trendingRefreshing = ObservableLiveData<Boolean>()
+    val trendingItems = ObservableLiveData<List<TrendingListItem>>()
+
+    val tmdbImageUrlProvider = ObservableLiveData<TmdbImageUrlProvider>()
 
     init {
-        disposables += Flowables.combineLatest(
-                trendingCall.data(0),
-                popularCall.data(0),
-                tmdbManager.imageProvider,
-                ::DiscoverViewState)
+        disposables += trendingCall.data(0)
                 .observeOn(schedulers.main)
-                .subscribe(data::setValue, Timber::e)
+                .subscribe(trendingItems::setValue, this::onRefreshError)
+
+        disposables += popularCall.data(0)
+                .observeOn(schedulers.main)
+                .subscribe(popularItems::setValue, this::onRefreshError)
+
+        disposables += tmdbManager.imageProvider
+                .observeOn(schedulers.main)
+                .subscribe({}, Timber::e)
 
         refresh()
     }
 
     private fun refresh() {
         disposables += popularCall.refresh(Unit)
+                .doOnSubscribe { trendingRefreshing.value = true }
+                .doOnTerminate { trendingRefreshing.value = false }
                 .subscribe(this::onSuccess, this::onRefreshError)
         disposables += trendingCall.refresh(Unit)
+                .doOnSubscribe { popularRefreshing.value = true }
+                .doOnTerminate { popularRefreshing.value = false }
                 .subscribe(this::onSuccess, this::onRefreshError)
     }
 
